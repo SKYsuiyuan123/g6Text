@@ -1,0 +1,165 @@
+<!--
+ * @Author: sunpeiyuan
+ * @Date: 2021-01-23 14:16:52
+ * @LastEditors: sunpeiyuan
+ * @LastEditTime: 2021-01-23 15:25:23
+ * @Description:
+-->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      #graph {
+        width: 100%;
+        height: 100%;
+        border: 1px solid #eeeeee;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="graph"></div>
+    <script src="https://gw.alipayobjects.com/os/lib/antv/g6/4.1.4/dist/g6.min.js"></script>
+
+    <script>
+      window.onload = () => {
+        const graph = new G6.Graph({
+          container: document.getElementById("graph"),
+          width: window.innerWidth,
+          height: window.innerHeight - 40,
+
+          layout: {
+            type: "dagre",
+          },
+
+          // 默认节点配置，也是全局配置。
+          defaultNode: {
+            type: "rect",
+            // size: [160, 80],
+            color: "#5B8FF9",
+            style: {
+              fill: "#9EC9FF",
+              radius: 4,
+              lineWidth: 2,
+              fill: "#DEF5FF",
+              stroke: "#1890ff",
+              shadowColor: "#1890ff",
+              shadowBlur: 20,
+              shadowOffsetX: 0,
+              shadowOffsetY: 0,
+              cursor: "move",
+            },
+            labelCfg: {
+              style: {
+                fill: "#f00",
+                fontSize: 20,
+              },
+            },
+          },
+          defaultEdge: {
+            style: {
+              stroke: "#e2e2e2",
+            },
+          },
+        });
+
+        const data = {
+          // 点集
+          nodes: [
+            {
+              id: "1",
+              label: "alps_file1",
+              type: "circle",
+              style: {
+                r: 40,
+                stroke: "#1890ff",
+                lineWidth: 5,
+              },
+            },
+            {
+              id: "2",
+              label: "alps_file2",
+              type: "rect",
+              style: {
+                width: 100,
+                height: 40,
+                radius: 6,
+                lineWidth: 2,
+              },
+            },
+            {
+              id: "3",
+              label: "alps_file3",
+              type: "ellipse",
+              style: {
+                rx: 50,
+                ry: 20,
+              },
+            },
+            {
+              id: "4",
+              label: "alps_file4",
+              type: "diamond",
+              style: {
+                lineWidth: 2,
+              },
+              size: [100, 50],
+            },
+
+            // {
+            //   id: "node1", // String，该节点存在则必须，节点的唯一标识
+            //   x: 100, // Number，可选，节点位置的 x 值
+            //   y: 200, // Number，可选，节点位置的 y 值
+            //   label: "node1",
+            //   type: "circle",
+            //   style: {
+            //     r: 40,
+            //     stroke: "#1890ff",
+            //     lineWidth: 5,
+            //   },
+            // },
+            // {
+            //   id: "node2", // String，该节点存在则必须，节点的唯一标识
+            //   x: 500, // Number，可选，节点位置的 x 值
+            //   y: 200, // Number，可选，节点位置的 y 值
+            //   label: "node2",
+            // },
+          ],
+          // 边集
+          edges: [
+            {
+              source: "1", // String，必须，起始点 id
+              target: "2", // String，必须，目标点 id
+              type: "line",
+              label: "line",
+            },
+            {
+              source: "1",
+              target: "3",
+              type: "polyline",
+              label: "polyline",
+            },
+            {
+              source: "2",
+              target: "4",
+              type: "arc",
+              label: "arc",
+            },
+            {
+              source: "3",
+              target: "4",
+              type: "cubic",
+              label: "cubic",
+            },
+          ],
+        };
+
+        graph.data(data);
+
+        graph.render();
+      };
+    </script>
+  </body>
+</html>

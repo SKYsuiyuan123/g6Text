@@ -1,0 +1,539 @@
+<!--
+ * @Author: sunpeiyuan
+ * @Date: 2021-01-23 14:16:52
+ * @LastEditors: sunpeiyuan
+ * @LastEditTime: 2021-01-24 17:58:44
+ * @Description: 自定义边
+-->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      #graph {
+        width: 100%;
+        height: 100%;
+        border: 1px solid #eeeeee;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="graph"></div>
+    <script src="https://gw.alipayobjects.com/os/lib/antv/g6/4.1.4/dist/g6.min.js"></script>
+
+    <script>
+      const nodeEvents = {
+        "nodeState:hover"(name, value, group) {
+          // console.log(value);
+          //  查找节点
+          const _item = group.getChildByIndex(0);
+          // console.log(_item);
+          const { style } = _item.cfg.attrs;
+
+          if (value) {
+            // 设置的状态生效
+            _item.attr(style[name]);
+          } else {
+            // 清除当前的状态，恢复到默认状态
+            _item.attr(style["nodeState:default"]);
+          }
+        },
+
+        "nodeState:selected"(name, value, group) {
+          const _item = group.getChildByIndex(0);
+          const { style } = _item.cfg.attrs;
+
+          // 查找文本
+          const text = group
+            .get("children")
+            .find((child) => child.cfg.type === "text");
+
+          if (value) {
+            // 设置的状态生效
+            _item.attr(style[name]);
+
+            if (style[name].labelCfg) {
+              text.attr(style[name].labelCfg.style);
+            }
+          } else {
+            // 清除当前状态
+            _item.attr(style["nodeState:default"]);
+          }
+        },
+      };
+
+      window.onload = () => {
+        registerNode();
+        registerBehavior(G6);
+        registerEdge(G6);
+
+        const graph = new G6.Graph({
+          container: document.getElementById("graph"),
+          width: window.innerWidth - 40,
+          height: window.innerHeight - 40,
+
+          layout: {
+            type: "dagre",
+          },
+
+          defaultNode: {
+            type: "k-rect",
+            style: {
+              width: 180,
+              height: 60,
+              radius: 10,
+            },
+            labelCfg: {
+              style: {
+                fontSize: 20,
+              },
+            },
+            anchorPoints: [
+              [0, 0],
+              [1, 0],
+              [0, 1],
+              [1, 1],
+            ],
+          },
+
+          nodeStateStyles: {
+            "nodeState:default": {
+              opacity: 1,
+            },
+            "nodeState:hover": {
+              opacity: 0.8,
+            },
+            "nodeState:selected": {
+              fill: "#e7f4fa",
+              labelCfg: {
+                style: {
+                  fill: "#333",
+                },
+              },
+            },
+          },
+
+          defaultEdge: {
+            type: "k-edge", // 使用自定义边
+            style: {
+              lineAppendWidth: 20, // 响应鼠标事件的检测宽度（边 移入移出时会更容易触发的属性。当 lineWidth 太小而不易选中时，可以通过此参数提升击中的范围。）
+            },
+          },
+
+          modes: {
+            default: ["drag-node", "node-hover", "node-select", "edge-active"],
+          },
+
+          fitCenter: true,
+        });
+
+        const data = {
+          // 点集
+          nodes: [
+            {
+              id: "1",
+              label: "node1",
+            },
+            {
+              id: "2",
+              label: "node2",
+            },
+            {
+              id: "3",
+              label: "node3",
+            },
+            {
+              id: "4",
+              label: "node4",
+            },
+          ],
+          // 边集
+          edges: [
+            {
+              source: "1", // String，必须，起始点 id
+              target: "2", // String，必须，目标点 id
+            },
+            {
+              source: "1",
+              target: "3",
+            },
+            {
+              source: "2",
+              target: "4",
+            },
+            {
+              source: "3",
+              target: "4",
+            },
+          ],
+        };
+
+        graph.data(data);
+        graph.render();
+
+        // 调用函数给 graph 绑定事件
+        // bindEvents();
+
+        graph.on("afterNodeClick", (event) => {
+          // console.log("画布监听到节点被点击了", event);
+        });
+
+        /**
+         * 注册自定义节点
+         */
+        function registerNode() {
+          /**
+           *
+           * 流程：注册基础 node => 添加 锚点/图标/文本 => 绘制 node => 设置 node 状态 => 设置交互动画。
+           *
+           * 参数：
+           *
+           * name: 自定义节点的名称、
+           *
+           * 生命周期方法：
+           *
+           * draw(cfg, group): 用于绘制节点，包含文本，锚点等。
+           * afterDraw(): 绘制后的附加操作。
+           * update(): 更新节点的配置，样式等。
+           * afterUpdate(): 更新节点后的附加操作。
+           * setState(): 设置节点状态，主要是交互状态，如：hover, active 等。
+           * getAnchorPoints(): 用来获取当前节点的锚点坐标配置。
+           *
+           *
+           * extendNodeName: 继承的节点名称
+           *
+           */
+          G6.registerNode(
+            "k-rect",
+            {
+              // 绘制文本节点
+              drawText(cfg, group) {
+                group.addShape("text", {
+                  attrs: {
+                    // x: cfg.style.width / 2,
+                    // y: cfg.style.height / 2,
+                    text: cfg.label,
+                    fontSize: 14,
+                    fill: "#fff",
+                    textAlign: "center",
+                    textBaseline: "middle",
+                    ...cfg.labelCfg.style,
+                  },
+                  className: "node-text",
+                  draggable: true,
+                });
+              },
+
+              // 添加锚点
+              drawAnchor(cfg, group) {
+                // 获取当前节点
+                const item = group.get("children")[0];
+                const bbox = item.getBBox();
+
+                const anchors = this.getAnchorPoints(cfg);
+
+                anchors &&
+                  anchors.forEach((p, i) => {
+                    console.log(p);
+                    const x = bbox.width * (p[0] - 0.5);
+                    const y = bbox.height * (p[1] - 0.5);
+
+                    group.addShape("circle", {
+                      attrs: {
+                        x,
+                        y,
+                        fill: "#e7e7e7",
+                        stroke: "#1890ff",
+                        r: 5,
+                      },
+                      zIndex: i, // 用于后边的节点排序
+                      nodeId: group.get("id"),
+                      draggable: true,
+                      isAnchor: true,
+                      index: i,
+                    });
+                  });
+              },
+
+              draw(cfg, group) {
+                /**
+                 * cfg: 公共配置。
+                 * group: 节点分组，包含节点配置，锚点，图标，文本等 shape.
+                 * 绘制流程：
+                 *  1. 获取默认样式配置
+                 *  2. 添加 shape
+                 *  3. 添加文本节点/锚点等
+                 *  4. return shape
+                 */
+
+                // 1.
+                const attrs = cfg;
+
+                console.log(cfg);
+
+                // 2.
+                // rect: 继承内置节点的 shape， 可选的有 rect, circle, ellipse, path 等。
+
+                const shape = group.addShape("rect", {
+                  // 所有的样式配置
+                  attrs: {
+                    fill: "#1890ff",
+                    ...attrs,
+                    ...attrs.style,
+                    x: -attrs.style.width / 2,
+                    y: -attrs.style.height / 2,
+                  },
+                  className: "custom-shape", // 添加自定义属性，方便以后对节点进行查找更新等
+                  draggable: true, // 允许自定义图形使用拖拽事件
+                });
+
+                // 3.
+                // this 指的是节点的实例
+                this.drawText(cfg, group);
+                this.drawAnchor(cfg, group);
+
+                // 4.
+                return shape;
+              },
+              afterDraw() {},
+              update() {},
+              afterUpdate() {},
+
+              // 自定义行为与自定义节点连接，依靠 setState
+              setState(name, value, item) {
+                // console.log(name, value, item);
+                const group = item.getContainer();
+
+                nodeEvents[name].call(this, name, value, group);
+              },
+
+              getAnchorPoints(cfg) {
+                return (
+                  cfg.anchorPoints || [
+                    [0.5, 0],
+                    [1, 0.5],
+                    [0.5, 1],
+                    [0, 0.5],
+                  ]
+                );
+              },
+            }
+            // "extendNodeName"
+          );
+        }
+
+        /**
+         * 注册自定义行为
+         */
+        function registerBehavior(G6) {
+          /**
+           *
+           * 流程：注册基础 node => 添加 锚点/图标/文本 => 绘制 node => 设置 node 状态 => 设置交互动画。
+           *
+           * 参数：
+           *
+           * name: 自定义行为的名称、
+           *
+           * 生命周期方法：
+           *
+           * draw(cfg, group): 用于绘制节点，包含文本，锚点等。
+           * afterDraw(): 绘制后的附加操作。
+           * update(): 更新节点的配置，样式等。
+           * afterUpdate(): 更新节点后的附加操作。
+           * setState(): 设置节点状态，主要是交互状态，如：hover, active 等。
+           * getAnchorPoints(): 用来获取当前节点的锚点坐标配置。
+           *
+           *
+           * extendNodeName: 继承的节点名称
+           *
+           */
+          G6.registerBehavior("node-hover", {
+            getEvents() {
+              return {
+                "node:mouseenter": "onMouseEnter",
+                "node:mouseleave": "onMouseLeave",
+              };
+            },
+
+            onMouseEnter(event) {
+              // console.log(event);
+              console.log("mouseenter");
+              event.item.setState("nodeState:hover", true);
+            },
+
+            onMouseLeave(event) {
+              console.log("mouseleave");
+              event.item.setState("nodeState:hover", false);
+            },
+          });
+
+          G6.registerBehavior("node-select", {
+            getEvents() {
+              return {
+                "node:mousedown": "onMouseDown",
+                "node:click": "onNodeClick",
+              };
+            },
+
+            onMouseDown(event) {
+              event.item.toFront();
+            },
+
+            onNodeClick(event) {
+              console.log("lick");
+              this._clearSelected();
+              // event.item.setState("nodeState", "selected");
+              event.item.setState("nodeState:selected", true);
+
+              // 点击完节点后，也希望整个画布可以监听到 这个事件，以便于后边的操作，通过 emit 通知整个画图。
+              // emit 提交一个自定义的事件名
+              this.graph.emit("afterNodeClick", event);
+            },
+
+            // 清空已选
+            _clearSelected() {
+              const selectedNode = this.graph.findAllByState(
+                "node",
+                "nodeState:selected"
+              );
+
+              // console.log(selectedNode);
+
+              selectedNode.forEach((node) => {
+                node.clearStates(["nodeState:selected", "nodeState:hover"]);
+              });
+            },
+          });
+
+          //  给边定义 自定义行为
+          G6.registerBehavior("edge-active", {
+            getEvents() {
+              return {
+                "edge:mouseenter": "onMouseEnter",
+                "edge:mouseleave": "onMouseLeave",
+              };
+            },
+
+            onMouseEnter(event) {
+              event.item.setState("edgeState:active", true);
+            },
+
+            onMouseLeave(event) {
+              event.item.setState("edgeState:active", false);
+            },
+          });
+        }
+
+        // // 给 graph 绑定 边的 事件。
+        // function bindEvents() {
+        //   graph.on("edge:mouseenter", (e) => {
+        //     // console.log(e.item);
+        //     if (e.item) {
+        //       const model = e.item.get("model");
+
+        //       model.style.stroke = "#1890ff";
+
+        //       graph.updateItem(e.item, model);
+        //     }
+        //   });
+
+        //   graph.on("edge:mouseleave", (e) => {
+        //     if (e.item) {
+        //       const model = e.item.get("model");
+
+        //       model.style.stroke = "#e5e5e5";
+
+        //       graph.updateItem(e.item, model);
+        //     }
+        //   });
+        // }
+
+        /**
+         * 自定义边
+         */
+        function registerEdge(G6) {
+          G6.registerEdge(
+            "k-edge", // 自定义节点名称
+
+            // 生命周期方法
+            {
+              running: false,
+
+              // 自定义方法 - 动画
+              runAnimate(group) {
+                // 如果动画在执行，就不再重复执行，防止动画被触发。
+                if (this.running) return;
+
+                this.running = true;
+
+                group.toFront();
+
+                let index = 0;
+
+                const path = group.get("children")[0];
+                // console.log(path);
+
+                const dashLine = group.addShape("path", {
+                  attrs: {
+                    offset: path.attrs.offset,
+                    path: path.attrs.path,
+                    stroke: "#1890ff",
+                    startArrow: path.attrs.startArrow,
+                    endArrow: path.attrs.endArrow,
+                  },
+                  name: "edge-dash", // 移除动画时需要
+                });
+
+                // 第一个参数，刷新每一帧 走过的位置
+                // 第二个参数，是否 循环播放
+                dashLine.animate(
+                  (radio) => {
+                    index++;
+
+                    return {
+                      lineDash: [2, 1, 2, 4],
+                      lineDashOffset: -index,
+                    };
+                  },
+                  {
+                    repeat: true, // 是否重复
+                    duration: 3000, // 播放一次动画的时长（配合 repeat: true 的话就会无限播放）
+                  }
+                );
+              },
+
+              stopAnimate(group) {
+                const path = group
+                  .get("children")
+                  .find((item) => item.cfg.name === "edge-dash");
+
+                if (path) {
+                  path.remove();
+                  this.running = false;
+                }
+              },
+
+              setState(name, value, item) {
+                // console.log(name);
+                const group = item.getContainer();
+
+                if (name === "edgeState:active" && value) {
+                  // 鼠标移入 开始动画
+                  this.runAnimate(group);
+                } else if (name === "edgeState:active" && !value) {
+                  // 鼠标移出 停止动画
+
+                  this.stopAnimate(group);
+                }
+              },
+            },
+
+            "polyline" // 继承节点名称
+          );
+        }
+      };
+    </script>
+  </body>
+</html>

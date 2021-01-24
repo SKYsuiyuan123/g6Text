@@ -1,0 +1,160 @@
+<!--
+ * @Author: sunpeiyuan
+ * @Date: 2021-01-23 14:16:52
+ * @LastEditors: sunpeiyuan
+ * @LastEditTime: 2021-01-23 16:56:15
+ * @Description:
+-->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      #graph {
+        width: 100%;
+        height: 100%;
+        border: 1px solid #eeeeee;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="graph"></div>
+    <script src="https://gw.alipayobjects.com/os/lib/antv/g6/4.1.4/dist/g6.min.js"></script>
+
+    <script>
+      window.onload = () => {
+        const graph = new G6.Graph({
+          container: document.getElementById("graph"),
+          width: window.innerWidth,
+          height: window.innerHeight - 40,
+
+          fitView: true,
+          fitViewPadding: [50],
+
+          layout: {
+            type: "dagre",
+          },
+
+          // 默认节点配置，也是全局配置。
+          defaultNode: {
+            type: "circle",
+            style: {
+              r: 30,
+              stroke: "#1890ff",
+              lineWidth: 1,
+            },
+          },
+          defaultEdge: {
+            type: "line",
+          },
+
+          modes: {
+            default: [
+              "zoom-canvas",
+              "drag-node",
+              "drag-canvas",
+              "brush-select",
+            ],
+          },
+
+          nodeStateStyles: {
+            // 鼠标 hover 到节点上 hover 状态为 启用。
+            hover: {
+              fill: "lightsteelblue",
+            },
+            // 鼠标点击节点，click 状态启用
+            click: {
+              stroke: "steelblue",
+              lineWidth: 3,
+            },
+          },
+        });
+
+        const data = {
+          // 点集
+          nodes: [
+            {
+              id: "1",
+              label: "node1",
+            },
+            {
+              id: "2",
+              label: "node2",
+            },
+            {
+              id: "3",
+              label: "node3",
+            },
+            {
+              id: "4",
+              label: "node4",
+            },
+          ],
+          // 边集
+          edges: [
+            {
+              source: "1", // String，必须，起始点 id
+              target: "2", // String，必须，目标点 id
+            },
+            {
+              source: "1",
+              target: "3",
+            },
+            {
+              source: "2",
+              target: "4",
+            },
+            {
+              source: "3",
+              target: "4",
+            },
+          ],
+        };
+
+        graph.data(data);
+
+        graph.render();
+
+        // graph.on('元素：事件名', event => {});
+
+        // 画布点击
+        graph.on("canvas:click", (event) => {
+          // console.log(event);
+          const nodes = graph.findAllByState("node", "click");
+
+          // 点击画布 取消所有节点的 点击 事件
+          nodes.forEach((node) => {
+            graph.setItemState(node, "click", false);
+          });
+        });
+
+        // 节点点击
+        graph.on("node:click", (event) => {
+          // console.log(event);
+          const nodes = graph.findAllByState("node", "click");
+
+          // 点击节点时，先取消其它 节点 的 点击 事件
+          nodes.forEach((node) => {
+            graph.setItemState(node, "click", false);
+          });
+
+          // 给当前点击的节点 添加 点击 事件
+          graph.setItemState(event.item, "click", true);
+        });
+
+        // 节点 鼠标移入
+        graph.on("node:mouseenter", (event) => {
+          // console.log(event);
+          graph.setItemState(event.item, "hover", true);
+        });
+
+        // 节点 鼠标移出
+        graph.on("node:mouseleave", (event) => {
+          graph.setItemState(event.item, "hover", false);
+        });
+      };
+    </script>
+  </body>
+</html>

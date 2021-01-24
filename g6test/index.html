@@ -1,0 +1,110 @@
+<!--
+ * @Author: sunpeiyuan
+ * @Date: 2021-01-23 14:16:52
+ * @LastEditors: sunpeiyuan
+ * @LastEditTime: 2021-01-23 14:47:19
+ * @Description:
+-->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      #graph {
+        width: 100%;
+        height: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- <div id="graph"></div> -->
+    <canvas id="graph"></canvas>
+    <script src="https://gw.alipayobjects.com/os/antv/pkg/_antv.g6-3.1.0/build/g6.js"></script>
+
+    <!-- <script>
+      window.onload = () => {
+        const graph = new G6.Graph({
+          container: document.getElementById("graph"),
+          width: window.innerWidth,
+          height: window.innerHeight,
+          defaultNode: {
+            shape: "circle",
+            size: [100],
+            color: "#5B8FF9",
+            style: {
+              fill: "#9EC9FF",
+              lineWidth: 3,
+            },
+            labelCfg: {
+              style: {
+                fill: "#fff",
+                fontSize: 20,
+              },
+            },
+          },
+          defaultEdge: {
+            style: {
+              stroke: "#e2e2e2",
+            },
+          },
+        });
+
+        const data = {
+          // 点集
+          nodes: [
+            {
+              id: "node1", // String，该节点存在则必须，节点的唯一标识
+              x: 100, // Number，可选，节点位置的 x 值
+              y: 200, // Number，可选，节点位置的 y 值
+            },
+            {
+              id: "node2", // String，该节点存在则必须，节点的唯一标识
+              x: 300, // Number，可选，节点位置的 x 值
+              y: 200, // Number，可选，节点位置的 y 值
+            },
+          ],
+          // 边集
+          edges: [
+            {
+              source: "node1", // String，必须，起始点 id
+              target: "node2", // String，必须，目标点 id
+            },
+          ],
+        };
+
+        graph.data(data);
+
+        graph.render();
+      };
+    </script> -->
+
+    <script>
+      window.onload = () => {
+        const canvas = document.getElementById("graph");
+        const { innerWidth, innerHeight } = window;
+        const ctx = canvas.getContext("2d");
+
+        canvas.style.width = `${innerWidth}px`;
+        canvas.style.height = `${innerHeight}px`;
+        canvas.width = innerWidth * 2;
+        canvas.height = innerHeight * 2;
+
+        ctx.fillStyle = "#c7e5fe";
+        ctx.fillRect(700, 400, 300, 100);
+        ctx.lineWidth = 3;
+
+        ctx.beginPath();
+        ctx.moveTo(1000, 400);
+        ctx.lineTo(700, 400);
+        ctx.lineTo(700, 500);
+        ctx.lineTo(1000, 500);
+        ctx.closePath();
+
+        ctx.strokeStyle = "#709ef7";
+        ctx.stroke();
+      };
+    </script>
+  </body>
+</html>

@@ -1,0 +1,239 @@
+<!--
+ * @Author: sunpeiyuan
+ * @Date: 2021-01-23 14:16:52
+ * @LastEditors: sunpeiyuan
+ * @LastEditTime: 2021-01-23 22:35:45
+ * @Description: 自定义节点 - 添加锚点
+-->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      #graph {
+        width: 100%;
+        height: 100%;
+        border: 1px solid #eeeeee;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="graph"></div>
+    <script src="https://gw.alipayobjects.com/os/lib/antv/g6/4.1.4/dist/g6.min.js"></script>
+
+    <script>
+      window.onload = () => {
+        registerNode();
+
+        const graph = new G6.Graph({
+          container: document.getElementById("graph"),
+          width: window.innerWidth - 40,
+          height: window.innerHeight - 40,
+          layout: {
+            type: "dagre",
+          },
+          defaultNode: {
+            type: "k-rect",
+            style: {
+              width: 180,
+              height: 60,
+              radius: 10,
+            },
+            labelCfg: {
+              style: {
+                fontSize: 20,
+              },
+            },
+            anchorPoints: [
+              [0, 0],
+              [1, 0],
+              [0, 1],
+              [1, 1],
+            ],
+          },
+          fitCenter: true,
+        });
+
+        const data = {
+          // 点集
+          nodes: [
+            {
+              id: "1",
+              label: "node1",
+            },
+            {
+              id: "2",
+              label: "node2",
+            },
+            {
+              id: "3",
+              label: "node3",
+            },
+            {
+              id: "4",
+              label: "node4",
+            },
+          ],
+          // 边集
+          edges: [
+            {
+              source: "1", // String，必须，起始点 id
+              target: "2", // String，必须，目标点 id
+            },
+            {
+              source: "1",
+              target: "3",
+            },
+            {
+              source: "2",
+              target: "4",
+            },
+            {
+              source: "3",
+              target: "4",
+            },
+          ],
+        };
+
+        graph.data(data);
+        graph.render();
+
+        /**
+         * 注册自定义节点
+         */
+        function registerNode() {
+          /**
+           * 注册自定义节点
+           *
+           * 流程：注册基础 node => 添加 锚点/图标/文本 => 绘制 node => 设置 node 状态 => 设置交互动画。
+           *
+           * 参数：
+           *
+           * name: 自定义节点的名称、
+           *
+           * 生命周期方法：
+           *
+           * draw(cfg, group): 用于绘制节点，包含文本，锚点等。
+           * afterDraw(): 绘制后的附加操作。
+           * update(): 更新节点的配置，样式等。
+           * afterUpdate(): 更新节点后的附加操作。
+           * setState(): 设置节点状态，主要是交互状态，如：hover, active 等。
+           * getAnchorPoints(): 用来获取当前节点的锚点坐标配置。
+           *
+           *
+           * extendNodeName: 继承的节点名称
+           *
+           */
+          G6.registerNode(
+            "k-rect",
+            {
+              // 绘制文本节点
+              drawText(cfg, group) {
+                group.addShape("text", {
+                  attrs: {
+                    // x: cfg.style.width / 2,
+                    // y: cfg.style.height / 2,
+                    text: cfg.label,
+                    fill: "#fff",
+                    textAlign: "center",
+                    textBaseline: "middle",
+                    ...cfg.labelCfg.style,
+                  },
+                });
+              },
+
+              // 添加锚点
+              drawAnchor(cfg, group) {
+                // 获取当前节点
+                const item = group.get("children")[0];
+                const bbox = item.getBBox();
+
+                const anchors = this.getAnchorPoints(cfg);
+
+                anchors &&
+                  anchors.forEach((p, i) => {
+                    console.log(p);
+                    const x = bbox.width * (p[0] - 0.5);
+                    const y = bbox.height * (p[1] - 0.5);
+
+                    group.addShape("circle", {
+                      attrs: {
+                        x,
+                        y,
+                        fill: "#e7e7e7",
+                        stroke: "#1890ff",
+                        r: 5,
+                      },
+                      zIndex: i, // 用于后边的节点排序
+                      nodeId: group.get("id"),
+                      draggable: true,
+                      isAnchor: true,
+                      index: i,
+                    });
+                  });
+              },
+
+              draw(cfg, group) {
+                /**
+                 * cfg: 公共配置。
+                 * group: 节点分组，包含节点配置，锚点，图标，文本等 shape.
+                 * 绘制流程：
+                 *  1. 获取默认样式配置
+                 *  2. 添加 shape
+                 *  3. 添加文本节点/锚点等
+                 *  4. return shape
+                 */
+
+                // 1.
+                const attrs = cfg;
+
+                console.log(cfg);
+
+                // 2.
+                // rect: 继承内置节点的 shape， 可选的有 rect, circle, ellipse, path 等。
+
+                const shape = group.addShape("rect", {
+                  // 所有的样式配置
+                  attrs: {
+                    fill: "#1890ff",
+                    ...attrs,
+                    ...attrs.style,
+                    x: -attrs.style.width / 2,
+                    y: -attrs.style.height / 2,
+                  },
+                  className: "custom-shape", // 添加自定义属性，方便以后对节点进行查找更新等
+                  draggable: true, // 允许自定义图形使用拖拽事件
+                });
+
+                // 3.
+                // this 指的是节点的实例
+                this.drawText(cfg, group);
+                this.drawAnchor(cfg, group);
+
+                // 4.
+                return shape;
+              },
+              afterDraw() {},
+              update() {},
+              afterUpdate() {},
+              setState() {},
+              getAnchorPoints(cfg) {
+                return (
+                  cfg.anchorPoints || [
+                    [0.5, 0],
+                    [1, 0.5],
+                    [0.5, 1],
+                    [0, 0.5],
+                  ]
+                );
+              },
+            },
+            "extendNodeName"
+          );
+        }
+      };
+    </script>
+  </body>
+</html>
